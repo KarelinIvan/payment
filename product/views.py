@@ -1,11 +1,12 @@
-from product.models import Item
-import stripe
 import os
-from rest_framework.response import Response
+
+import stripe
 from django.shortcuts import render
 from rest_framework.decorators import api_view
-
+from rest_framework.response import Response
 from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND
+
+from product.models import Item
 
 stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
 
@@ -17,11 +18,9 @@ def get_item(request, pk):
     try:
         item = Item.objects.get(pk=pk)
         context = {'product': item}
-        return render(request,item.html,context)
+        return render(request, item.html, context)
     except Item.DoesNotExist:
         return Response(status=HTTP_404_NOT_FOUND)
-
-    
 
 
 @api_view(['GET'])
