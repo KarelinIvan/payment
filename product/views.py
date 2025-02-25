@@ -11,18 +11,22 @@ stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
 
 
 @api_view(['GET'])
-def get_product(request, pk):
+def get_item(request, pk):
+    """ Извлекает элемент из базы данных на основе предоставленного первичного ключа,
+    и отображает его с использованием связанного с ним HTML-шаблона """
     try:
         item = Item.objects.get(pk=pk)
         context = {'product': item}
         return render(request,item.html,context)
     except Item.DoesNotExist:
         return Response(status=HTTP_404_NOT_FOUND)
+
     
 
 
 @api_view(['GET'])
 def create_session(request, pk):
+    """ Создает сеанс оформления заказа Stripe для указанного продукта """
     try:
         item = Item.objects.get(pk=pk)
         checkout_session = stripe.checkout.Session.create(
@@ -46,4 +50,3 @@ def create_session(request, pk):
         return Response({'session_id': checkout_session.id})
     except Exception as e:
         return Response(str(e), status=HTTP_400_BAD_REQUEST)
-
