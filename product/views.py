@@ -16,9 +16,9 @@ def get_item(request, pk):
     """ Извлекает элемент из базы данных на основе предоставленного первичного ключа,
     и отображает его с использованием связанного с ним HTML-шаблона """
     try:
-        item = Item.objects.get(pk=pk)
-        context = {'product': item}
-        return render(request, item.html, context)
+        item = Item.objects.get(id=pk)
+        context = {'item': item}
+        return render(request, 'product/item.html', context)
     except Item.DoesNotExist:
         return Response(status=HTTP_404_NOT_FOUND)
 
