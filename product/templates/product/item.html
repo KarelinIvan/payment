@@ -2,26 +2,29 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Buy {{ item.name }}</title>
     <script src="https://js.stripe.com/v3/"></script>
 </head>
 <body>
-    <h1>{{ item.name }}</h1>
-    <p>{{ item.description }}</p>
-    <p>Price: ${{ item.price }}</p>
+    <h1>Наименование: {{ item.name }}</h1>
+    <p>Описание: {{ item.description }}</p>
+    <p>Цена: ${{ item.price }}</p>
     <button id="buy-button">Buy</button>
     <script>
-        const stripe = Stripe('your_publishable_key');
+        const stripe = Stripe('{{ STRIPE_SECRET_KEY }}');
         const buyButton = document.getElementById('buy-button');
+
         buyButton.addEventListener('click', async () => {
-            const response = await fetch(`/buy/${{ item.pk }}`, { method: 'GET' });
+            const response = await fetch(`/buy/${{ item.id }}`, { method: 'GET' });
             const session = await response.json();
-            stripe.redirectToCheckout({
-                sessionId: session.session_id
-            }).then(function(result) {
-                console.log(result);
-            });
+
+            if (response.ok && session.session_id) {
+                stripe.redirectToCheckout({
+                    sessionId: session.session_id
+                }).then(function(result) {
+                    console.log(result);
+                });
+            }
         });
     </script>
 </body>

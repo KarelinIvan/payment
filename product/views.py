@@ -1,10 +1,9 @@
 import os
 
 import stripe
+from django.http import JsonResponse
 from django.shortcuts import render
 from rest_framework.decorators import api_view
-from rest_framework.response import Response
-from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND
 
 from product.models import Item
 
@@ -16,11 +15,10 @@ def get_item(request, pk):
     """ Извлекает элемент из базы данных на основе предоставленного первичного ключа,
     и отображает его с использованием связанного с ним HTML-шаблона """
     try:
-        item = Item.objects.get(id=pk)
-        context = {'item': item}
-        return render(request, 'product/item.html', context)
+        item = Item.objects.get(pk=pk)
     except Item.DoesNotExist:
-        return Response(status=HTTP_404_NOT_FOUND)
+        return JsonResponse({'error': 'Item not found'}, status=404)
+    return render(request, 'product/item.html', {'item': item})
 
 
 @api_view(['GET'])
@@ -28,24 +26,25 @@ def create_session(request, pk):
     """ Создает сеанс оформления заказа Stripe для указанного продукта """
     try:
         item = Item.objects.get(pk=pk)
-        checkout_session = stripe.checkout.Session.create(
-            payment_method_types=['card'],
-            line_items=[
-                {
-                    'price_data': {
-                        'currency': 'usd',
-                        'product_data': {
-                            'name': item.name,
-                        },
-                        'unit_amount': int(item.price * 100),
+    except Item.DoesNotExist:
+        return JsonResponse({'error': 'Item not found'}, status=404)
+
+    session = stripe.checkout.Session.create(
+        payment_method_types=['card'],
+        line_items=[
+            {
+                'price_data': {
+                    'currency': 'usd',
+                    'product_data': {
+                        'name': item.name,
                     },
-                    'quantity': 1,
+                    'unit_amount': int(item.price * 100),
                 },
-            ],
-            mode='payment',
-            success_url='http://localhost:8000/success?session_id={CHECKOUT_SESSION_ID}',
-            cancel_url='http://localhost:8000/cancel',
-        )
-        return Response({'session_id': checkout_session.id})
-    except Exception as e:
-        return Response(str(e), status=HTTP_400_BAD_REQUEST)
+                'quantity': 1,
+            },
+        ],
+        mode='payment',
+        success_url='http://example.com/success',
+        cancel_url='http://example.com/cancel',
+    )
+    return JsonResponse({'session_id': session.id})
