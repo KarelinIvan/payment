@@ -5,9 +5,11 @@ from django.http import JsonResponse
 from django.shortcuts import render
 from rest_framework.decorators import api_view
 
+from config import settings
+
 from product.models import Item
 
-stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
+stripe.api_key = settings.STRIPE_SECRET_KEY
 
 
 @api_view(['GET'])
@@ -44,7 +46,7 @@ def create_session(request, pk):
             },
         ],
         mode='payment',
-        success_url='http://example.com/success',
-        cancel_url='http://example.com/cancel',
+        success_url='http://example.com/product/success.html',
+        cancel_url='http://example.com/product/cancel.html',
     )
-    return JsonResponse({'session_id': session.id})
+    return session.get('session_id'), session.get('success_url')
