@@ -2,7 +2,7 @@
 {% block content %}
 <h1>{{ item }}</h1>
 <p>{{ item.description }}</p>
-<p>{{ item.price }}</p>
+<p>{{ item.price }} {{ item.currency }}</p>
 <button id="buy-button">Buy</button>
 
 <!-- Скрипт для работы с Stripe -->
