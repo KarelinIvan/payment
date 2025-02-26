@@ -58,7 +58,7 @@ class CreateSessionView(APIView):
                 },
             ],
             mode='payment',
-            success_url='http://example.com/product/success.html',
-            cancel_url='http://example.com/product/cancel.html',
+            success_url='http://localhost:8000/product/success.html',
+            cancel_url='http://localhost:8000/product/cancel.html',
         )
         return session.get('session_id'), session.get('success_url')
