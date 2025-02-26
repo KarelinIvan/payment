@@ -1,58 +1,53 @@
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.renderers import TemplateHTMLRenderer
-from rest_framework.exceptions import NotFound
-
-from config.settings import STRIPE_SECRET_KEY
-from .models import Item
 import stripe
+from django.conf import settings
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, render
+from django.views.generic.base import View
 
-stripe.api_key = STRIPE_SECRET_KEY
+from product.models import Item
 
-class BuyItemView(APIView):
-    renderer_classes = [TemplateHTMLRenderer]
-    template_name = 'product/buy.html'
+stripe.api_key = settings.STRIPE_SECRET_KEY
 
-    def get(self, request, pk):
+
+class CreateCheckoutSessionView(View):
+    """ Вьюсет для создания сессии оплаты Stripe """
+
+    def get(self, request, *args, **kwargs):
+        item_id = kwargs['item_id']
+        item = get_object_or_404(Item, id=item_id)
+        domain = "http://130.193.52.110:8082"  # here must be actual domain
+        if settings.DEBUG:
+            domain = "http://127.0.0.1:8082"
         try:
-            item = Item.objects.get(pk=pk)
-        except Item.DoesNotExist:
-            raise NotFound("Item does not exist")
-
-        session = stripe.checkout.Session.create(
-            payment_method_types=['card'],
-            line_items=[
-                {
-                    'price_data': {
-                        'currency': 'usd',
-                        'product_data': {
-                            'name': item.name,
+            checkout_session = stripe.checkout.Session.create(
+                payment_method_types=['card'],
+                line_items=[
+                    {
+                        "price_data": {
+                            "currency": item.currency,
+                            "product_data": {"name": item.name},
+                            "unit_amount": int(item.price * 100),  # convert dollars into cents
                         },
-                        'unit_amount': int(item.price * 100),
+                        "quantity": 1,
                     },
-                    'quantity': 1,
-                }
-            ],
-            mode='payment',
-            success_url='http://localhost:8000/success/',
-            cancel_url='http://localhost:8000/cancel/',
-        )
+                ],
+                mode='payment',
+                success_url=f'{domain}/payment_success/',
+                cancel_url=f'{domain}/payment_failed/',
+            )
+            return JsonResponse({'sessionId': checkout_session['id']})
+        except Exception as err:
+            print(err)  # should be in logs
+            return JsonResponse({'error': str(err)})
 
-        return Response({
-            'session_id': session.id,
-            'secretKey': stripe.api_key,
-        })
 
-class ItemDetailView(APIView):
-    renderer_classes = [TemplateHTMLRenderer]
-    template_name = 'product/item_detail.html'
+class ItemView(View):
+    """ Вьюсет для просмотра продукта """
+    template_name = 'product/item.html'
 
-    def get(self, request, pk):
-        try:
-            item = Item.objects.get(pk=pk)
-        except Item.DoesNotExist:
-            raise NotFound("Item does not exist")
-
-        return Response({
-            'item': item,
-        })
+    def get(self, request, item_id):
+        item = get_object_or_404(Item, id=item_id)
+        context = {'item': item,
+                   'strip_public_key': settings.STRIPE_PUBLISHABLE_KEY
+                   }
+        return render(request, self.template_name, context)
