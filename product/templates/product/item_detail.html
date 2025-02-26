@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Item Detail</title>
+</head>
+<body>
+    <h1>{{ item.name }}</h1>
+    <p>Description: {{ item.description }}</p>
+    <p>Price: ${{ item.price }}</p>
+    <a href="{% url 'buy-item' item.pk %}" class="btn btn-primary">Buy</a>
+</body>
+</html>

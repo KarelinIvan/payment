@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Buy Item</title>
+    <script src="https://js.stripe.com/v3/"></script>
+</head>
+<body>
+    <button id="checkout-button">Buy</button>
+
+    <script>
+        var publishableKey = '{{ secretKey }}';
+        var sessionId = '{{ session_id }}';
+
+        var stripe = Stripe(secretKey);
+
+        document.getElementById('checkout-button').addEventListener('click', function() {
+            stripe.redirectToCheckout({
+                sessionId: sessionId
+            }).then(function(result) {
+                // If `redirectToCheckout` fails due to a browser or network
+                // error, display the localized error message to your customer
+                // using `result.error.message`.
+            });
+        });
+    </script>
+</body>
+</html>
