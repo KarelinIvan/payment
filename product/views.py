@@ -15,9 +15,7 @@ class CreateCheckoutSessionView(View):
     def get(self, request, *args, **kwargs):
         item_id = kwargs['item_id']
         item = get_object_or_404(Item, id=item_id)
-        domain = "http://130.193.52.110:8082"  # here must be actual domain
-        if settings.DEBUG:
-            domain = "http://127.0.0.1:8082"
+        domain = "http://127.0.0.1:8000"
         try:
             checkout_session = stripe.checkout.Session.create(
                 payment_method_types=['card'],
@@ -26,7 +24,7 @@ class CreateCheckoutSessionView(View):
                         "price_data": {
                             "currency": item.currency,
                             "product_data": {"name": item.name},
-                            "unit_amount": int(item.price * 100),  # convert dollars into cents
+                            "unit_amount": int(item.price * 100),
                         },
                         "quantity": 1,
                     },
