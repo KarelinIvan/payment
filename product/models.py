@@ -9,6 +9,7 @@ class Item(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Цена', help_text='Укажите цену продукта',
                                 validators=[MinValueValidator(0)])
     description = models.TextField(verbose_name='Описание продукта', help_text='Укажите описание продукта')
+    currency = models.CharField(max_length=10, default='USD')
 
     class Meta:
         verbose_name = 'Продукт'
