@@ -1,19 +1,13 @@
-import os
-
 import stripe
-from django.http import JsonResponse
+from django.core.cache import cache
 from django.shortcuts import render
-from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.core.cache import cache
 
 from config import settings
-
 from product.models import Item
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
-
 
 
 def get_item_from_cache_or_db(pk):
@@ -26,6 +20,7 @@ def get_item_from_cache_or_db(pk):
         except Item.DoesNotExist:
             pass
     return item
+
 
 class GetItemView(APIView):
     def get(self, request, pk):
