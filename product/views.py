@@ -1,51 +1,42 @@
-import stripe
-from django.conf import settings
+from django.shortcuts import render
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404, render
-from django.views.generic.base import View
-
+import stripe
+from config import settings
 from product.models import Item
 
-stripe.api_key = settings.STRIPE_SECRET_KEY
+
+def get_stripe_session_id(request, item_id):
+    item = Item.objects.get(pk=item_id)
+    stripe.api_key = settings.STRIPE_SECRET_KEY
+    session = stripe.checkout.Session.create(
+        payment_method_types=['card'],
+        line_items=[{
+            'price_data': {
+                'currency': item.currency,
+                'product_data': {
+                    'name': item.name,
+                    'description': item.description,
+                },
+                'unit_amount': int(item.price * 100),
+            },
+            'quantity': 1,
+        }],
+        mode='payment',
+        success_url=request.build_absolute_uri('/success/'),
+        cancel_url=request.build_absolute_uri('/cancel/'),
+    )
+    return JsonResponse({'id': session.id})
 
 
-class CreateCheckoutSessionView(View):
-    """ Вьюсет для создания сессии оплаты Stripe """
-
-    def get(self, request, *args, **kwargs):
-        item_id = kwargs['item_id']
-        item = get_object_or_404(Item, id=item_id)
-        domain = "http://127.0.0.1:8000"
-        try:
-            checkout_session = stripe.checkout.Session.create(
-                payment_method_types=['card'],
-                line_items=[
-                    {
-                        "price_data": {
-                            "currency": item.currency,
-                            "product_data": {"name": item.name},
-                            "unit_amount": int(item.price * 100),
-                        },
-                        "quantity": 1,
-                    },
-                ],
-                mode='payment',
-                success_url=f'{domain}/payment_success/',
-                cancel_url=f'{domain}/payment_failed/',
-            )
-            return JsonResponse({'sessionId': checkout_session['id']})
-        except Exception as err:
-            print(err)  # should be in logs
-            return JsonResponse({'error': str(err)})
+def get_item_html(request, item_id):
+    item = Item.objects.get(pk=item_id)
+    publishable_key = settings.PUBLIC_STRIPE_SECRET_KEY
+    return render(request, 'product/item.html', {'item': item, 'publishable_key': publishable_key})
 
 
-class ItemView(View):
-    """ Вьюсет для просмотра продукта """
-    template_name = 'product/item.html'
+def success(request):
+    return render(request, 'product/success.html')
 
-    def get(self, request, item_id):
-        item = get_object_or_404(Item, id=item_id)
-        context = {'item': item,
-                   'strip_public_key': settings.STRIPE_PUBLISHABLE_KEY
-                   }
-        return render(request, self.template_name, context)
+
+def cancel(request):
+    return render(request, 'product/cancel.html')

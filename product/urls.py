@@ -1,8 +1,12 @@
 from django.urls import path
+from product.views import get_stripe_session_id, get_item_html, success, cancel
+from product.apps import ProductConfig
 
-from product.views import CreateCheckoutSessionView, ItemView
+app_name = ProductConfig.name
 
 urlpatterns = [
-    path('buy/<int:item_id>/', CreateCheckoutSessionView.as_view(), name='buy_item'),  # create a checkout session
-    path('item/<int:item_id>/', ItemView.as_view(), name='item'),
+    path('buy/<int:item_id>/', get_stripe_session_id, name='get_stripe_session_id'),
+    path('item/<int:item_id>/', get_item_html, name='get_item_html'),
+    path('success/', success, name='success'),
+    path('cancel/', cancel, name='cancel'),
 ]
